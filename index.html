@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Cartabase</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1B2430" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="install-banner" id="install-banner">
+  <span>Install Cartabase on your home screen for offline use.</span>
+  <button id="install-btn">Install</button>
+</div>
+
+<header class="topbar">
+  <div class="topbar-brand"><span class="mark"></span> Cartabase</div>
+</header>
+
+<nav class="page" style="padding-bottom:0;">
+  <div class="tabs">
+    <button class="tab-btn active" data-view="database-view">Database</button>
+    <button class="tab-btn" data-view="capture-view">Capture</button>
+    <button class="tab-btn" data-view="settings-view">Settings</button>
+  </div>
+</nav>
+
+<main class="page" style="padding-top:0;">
+
+  <!-- ===================== DATABASE VIEW ===================== -->
+  <section id="database-view" class="view active">
+    <div class="page-header">
+      <h1>Vehicle database</h1>
+      <p>Everything here is stored on this device only.</p>
+    </div>
+
+    <section class="card" style="padding:16px; margin-bottom:18px;">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px;">
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-plate">License plate</label>
+          <input type="search" id="f-plate" placeholder="e.g. B 1234" autocomplete="off" />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-color">Color</label>
+          <select id="f-color"><option value="">Any color</option></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-brand">Brand</label>
+          <select id="f-brand"><option value="">Any brand</option></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-model">Model</label>
+          <input type="search" id="f-model" placeholder="e.g. Avanza" autocomplete="off" />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-type">Vehicle type</label>
+          <select id="f-type"><option value="">Any type</option></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-date-from">Captured from</label>
+          <input type="date" id="f-date-from" />
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="f-date-to">Captured to</label>
+          <input type="date" id="f-date-to" />
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn btn-primary" id="btn-search">Search</button>
+        <button class="btn btn-ghost" id="btn-clear">Clear filters</button>
+        <span id="result-count" style="margin-left:auto; align-self:center; color:var(--ink-soft); font-size:13px;"></span>
+      </div>
+    </section>
+
+    <section class="card" id="table-wrap" style="overflow-x:auto;">
+      <table id="vehicle-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left; border-bottom:1px solid var(--border);">
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Image</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Plate</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Brand / Model</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Color</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Type</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Confidence</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;">Captured</th>
+            <th style="padding:10px 14px; font-size:12px; color:var(--ink-soft); font-weight:600;"></th>
+          </tr>
+        </thead>
+        <tbody id="vehicle-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" style="display:none;">
+        <h3>No vehicles found</h3>
+        <p>Try adjusting your filters, or capture a new vehicle to add one.</p>
+        <button class="btn btn-accent" id="empty-capture-btn">Capture a vehicle</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===================== CAPTURE VIEW ===================== -->
+  <section id="capture-view" class="view" style="max-width:560px; margin:0 auto;">
+    <div class="page-header">
+      <h1>Capture a vehicle</h1>
+      <p>Use your camera or upload a photo to detect plate, color, brand, model, and type.</p>
+    </div>
+
+    <section class="card" id="capture-step" style="padding:16px;">
+      <div id="camera-area">
+        <div id="camera-frame" style="position:relative; width:100%; aspect-ratio:4/3; background:#10151c; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <video id="video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover; display:none;"></video>
+          <div id="camera-placeholder" style="color:#9aa4b2; font-size:14px; text-align:center; padding:20px;">
+            Starting camera…
+          </div>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn btn-accent btn-block" id="btn-capture" disabled>Capture photo</button>
+        </div>
+      </div>
+
+      <div id="camera-fallback" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);">
+        <p style="color:var(--ink-soft); font-size:13px; margin:0 0 10px;">
+          Camera isn't available. Upload a photo instead:
+        </p>
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" />
+      </div>
+
+      <div id="camera-fallback-toggle" style="margin-top:10px; text-align:center;">
+        <button class="btn btn-ghost btn-sm" id="btn-show-upload">Upload a photo instead</button>
+      </div>
+    </section>
+
+    <section class="card" id="analyzing-step" style="display:none; padding:40px; text-align:center; color:var(--ink-soft);">
+      <div class="spinner" style="margin:0 auto 12px;"></div>
+      <span id="analyzing-label">Analyzing vehicle…</span>
+    </section>
+
+    <section class="card" id="review-step" style="display:none; padding:16px;">
+      <img id="review-image" alt="Captured vehicle" style="width:100%; max-height:280px; object-fit:cover; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;" />
+      <div id="review-fields"></div>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button class="btn btn-ghost" id="btn-retake">Retake</button>
+        <button class="btn btn-primary btn-block" id="btn-save">Add to database</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===================== SETTINGS VIEW ===================== -->
+  <section id="settings-view" class="view">
+    <div class="page-header">
+      <h1>Settings</h1>
+      <p>Cartabase runs entirely on this device — nothing here is sent anywhere unless you turn on the optional vision provider below.</p>
+    </div>
+
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+      <h3 style="margin-top:0; font-size:15px;">Storage</h3>
+      <p style="color:var(--ink-soft); font-size:13px;">Vehicle records and photos are stored in this browser's local database (IndexedDB). Clearing your browser's site data for this app, or uninstalling it, will delete everything.</p>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" id="btn-export">Export all data as JSON</button>
+      </div>
+    </section>
+
+    <section class="card" style="padding:16px;">
+      <h3 style="margin-top:0; font-size:15px;">Optional: cloud brand/model detection</h3>
+      <div class="settings-note">
+        The built-in offline detector only reads license plates and color reliably — it honestly can't tell a Toyota from a Honda from pixels alone.
+        Turning this on sends captured photos to an OpenAI-compatible vision API for brand/model/type recognition.
+        <strong>Your API key is stored in this browser's local storage and sent directly from your device</strong> — there's no server to keep it hidden, unlike a typical app. Only enable this if you're comfortable with that trade-off.
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="s-enabled" style="width:auto; margin-right:6px;" /> Enable cloud vision detection</label>
+      </div>
+      <div class="field">
+        <label for="s-key">API key</label>
+        <input type="text" id="s-key" placeholder="sk-..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="s-model">Model</label>
+        <input type="text" id="s-model" placeholder="gpt-4o-mini" />
+      </div>
+      <div class="field">
+        <label for="s-base">API base URL</label>
+        <input type="text" id="s-base" placeholder="https://api.openai.com/v1" />
+      </div>
+      <button class="btn btn-primary" id="btn-save-settings">Save settings</button>
+    </section>
+  </section>
+
+</main>
+
+<div id="modal-region"></div>
+
+<script src="js/settings.js"></script>
+<script src="js/db.js"></script>
+<script src="js/color-detect.js"></script>
+<script src="vendor/tesseract/tesseract.min.js"></script>
+<script src="js/plate-ocr.js"></script>
+<script src="js/analyzer.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/database-view.js"></script>
+<script src="js/capture-view.js"></script>
+<script src="js/settings-view.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
